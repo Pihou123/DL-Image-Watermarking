@@ -215,3 +215,19 @@ data/
 *.tar.gz
 *.pth
 *.npy
+/outputs/*
+!/outputs/.gitkeep
+
+# AI assistant settings and docs
+.claude/
+AGENTS.md
+
+# IDE / editor user settings
+.vscode/
+.idea/
+*.code-workspace
+.trae/
+
+# Project personal plans (sensitive to research direction)
+improvement_plan.md
+
