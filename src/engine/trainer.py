@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 from pathlib import Path
 
@@ -28,7 +28,7 @@ class Trainer:
         self.model_cfg = config["model"]
         self.vis_cfg = config.get("visualization", {})
 
-        self.message_length = int(self.model_cfg["message_length"])
+        self.message_length = int(self.model_cfg.get("payload_length", self.model_cfg["message_length"]))
 
         amp_enabled = bool(self.train_cfg.get("use_amp", False)) and self.device.type == "cuda"
         self.scaler = amp.GradScaler("cuda", enabled=amp_enabled)

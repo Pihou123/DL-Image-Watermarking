@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 from pathlib import Path
 import sys
@@ -74,7 +74,7 @@ def main() -> None:
     epoch = int(payload.get("epoch", 0))
     logger.info("Loaded checkpoint: %s (epoch %s)", checkpoint, epoch)
 
-    evaluator = Evaluator(model=model, device=device, message_length=int(cfg["model"]["message_length"]))
+    evaluator = Evaluator(model=model, device=device, message_length=int(cfg["model"].get("payload_length", cfg["model"]["message_length"])))
     metrics = evaluator.validate(val_loader, epoch=epoch)
     evaluator.save_visual_examples(val_loader, output_dir=eval_dir / "images", epoch=epoch, sample_count=args.sample_count)
 

@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import numpy as np
 import torch
@@ -17,6 +17,16 @@ class HiddenSystem(nn.Module):
         self.device = device
         self.model_cfg = model_cfg
         self.train_cfg = train_cfg
+
+        self.payload_length = int(model_cfg.get("payload_length", model_cfg["message_length"]))
+        self.message_length = int(model_cfg["message_length"])
+
+        if self.message_length != self.payload_length:
+            assert self.message_length % self.payload_length == 0, \
+                f"message_length ({self.message_length}) must be multiple of payload_length ({self.payload_length})"
+            self.repeat_factor = self.message_length // self.payload_length
+        else:
+            self.repeat_factor = 1
 
         self.encoder_decoder = EncoderDecoder(model_cfg=model_cfg, image_size=image_size, noise_manager=noise_manager).to(device)
         self.discriminator = Discriminator(model_cfg=model_cfg).to(device)
@@ -39,8 +49,25 @@ class HiddenSystem(nn.Module):
         self.cover_label = 1.0
         self.encoded_label = 0.0
 
+    def _expand_message(self, messages: torch.Tensor) -> torch.Tensor:
+        """Repeat each bit to create a redundant message for channel coding."""
+        if self.repeat_factor == 1:
+            return messages
+        return messages.repeat_interleave(self.repeat_factor, dim=1)
+
+    def _compress_message(self, decoded: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+        """Average over repeated copies to recover the original payload."""
+        if self.repeat_factor == 1:
+            return decoded, decoded
+        # Reshape to [B, payload_length, repeat_factor] and average
+        b = decoded.shape[0]
+        reshaped = decoded.view(b, self.payload_length, self.repeat_factor)
+        compressed = reshaped.mean(dim=2)
+        return compressed, decoded
+
     def infer(self, images: torch.Tensor, messages: torch.Tensor, epoch: int | None = None):
-        return self.encoder_decoder(images, messages, epoch=epoch)
+        expanded = self._expand_message(messages)
+        return self.encoder_decoder(images, expanded, epoch=epoch)
 
     def train_step(
         self,
@@ -53,6 +80,8 @@ class HiddenSystem(nn.Module):
         batch_size = images.shape[0]
         autocast_enabled = scaler is not None and self.device.type == "cuda"
 
+        expanded_messages = self._expand_message(messages)
+
         self.encoder_decoder.train()
         self.discriminator.train()
 
@@ -64,7 +93,7 @@ class HiddenSystem(nn.Module):
             self.optimizer_discriminator.zero_grad(set_to_none=True)
 
             with amp.autocast(device_type="cuda", enabled=autocast_enabled):
-                encoded_images, _, _, _ = self.encoder_decoder(images, messages, epoch=epoch)
+                encoded_images, _, _, _ = self.encoder_decoder(images, expanded_messages, epoch=epoch)
                 cover_target = torch.full((batch_size, 1), self.cover_label, device=self.device)
                 encoded_target = torch.full((batch_size, 1), self.encoded_label, device=self.device)
 
@@ -88,7 +117,7 @@ class HiddenSystem(nn.Module):
 
         self.optimizer_encoder_decoder.zero_grad(set_to_none=True)
         with amp.autocast(device_type="cuda", enabled=autocast_enabled):
-            encoded_images, noised_images, decoded_messages, _ = self.encoder_decoder(images, messages, epoch=epoch)
+            encoded_images, noised_images, decoded_messages, _ = self.encoder_decoder(images, expanded_messages, epoch=epoch)
 
             if self.use_discriminator:
                 target_encoded_as_cover = torch.full((batch_size, 1), self.cover_label, device=self.device)
@@ -102,11 +131,15 @@ class HiddenSystem(nn.Module):
             else:
                 g_loss_enc = self.mse(self.vgg_loss(encoded_images), self.vgg_loss(images))
 
-            g_loss_dec = self.mse(decoded_messages, messages)
+            g_loss_dec = self.mse(decoded_messages, expanded_messages)
+            compressed_decoded, _ = self._compress_message(decoded_messages)
+            g_loss_payload = self.mse(compressed_decoded, messages)
+            payload_weight = float(self.loss_weights.get("payload", float(self.loss_weights.get("decoder", 1.0))))
             total_loss = (
                 float(self.loss_weights.get("adversarial", 1.0)) * g_loss_adv
                 + float(self.loss_weights.get("encoder", 1.0)) * g_loss_enc
                 + float(self.loss_weights.get("decoder", 1.0)) * g_loss_dec
+                + payload_weight * g_loss_payload
             )
 
         if scaler is not None:
@@ -122,7 +155,7 @@ class HiddenSystem(nn.Module):
                 torch.nn.utils.clip_grad_norm_(self.encoder_decoder.parameters(), max_norm=grad_clip_norm)
             self.optimizer_encoder_decoder.step()
 
-        bit_error, bit_acc = self._bit_metrics(decoded_messages, messages)
+        bit_error, bit_acc = self._bit_metrics(compressed_decoded, messages)
         psnr_val = compute_psnr(encoded_images, images)
         ssim_val = compute_ssim(encoded_images, images)
         return {
@@ -142,10 +175,12 @@ class HiddenSystem(nn.Module):
     def validate_step(self, images: torch.Tensor, messages: torch.Tensor, epoch: int | None = None) -> dict[str, float]:
         batch_size = images.shape[0]
 
+        expanded_messages = self._expand_message(messages)
+
         self.encoder_decoder.eval()
         self.discriminator.eval()
 
-        encoded_images, _, decoded_messages, _ = self.encoder_decoder(images, messages, epoch=epoch)
+        encoded_images, _, decoded_messages, _ = self.encoder_decoder(images, expanded_messages, epoch=epoch)
 
         if self.use_discriminator:
             cover_target = torch.full((batch_size, 1), self.cover_label, device=self.device)
@@ -166,14 +201,18 @@ class HiddenSystem(nn.Module):
         else:
             g_loss_enc = self.mse(self.vgg_loss(encoded_images), self.vgg_loss(images))
 
-        g_loss_dec = self.mse(decoded_messages, messages)
+        g_loss_dec = self.mse(decoded_messages, expanded_messages)
+        compressed_decoded, _ = self._compress_message(decoded_messages)
+        g_loss_payload = self.mse(compressed_decoded, messages)
+        payload_weight = float(self.loss_weights.get("payload", float(self.loss_weights.get("decoder", 1.0))))
         total_loss = (
             float(self.loss_weights.get("adversarial", 1.0)) * g_loss_adv
             + float(self.loss_weights.get("encoder", 1.0)) * g_loss_enc
             + float(self.loss_weights.get("decoder", 1.0)) * g_loss_dec
+            + payload_weight * g_loss_payload
         )
 
-        bit_error, bit_acc = self._bit_metrics(decoded_messages, messages)
+        bit_error, bit_acc = self._bit_metrics(compressed_decoded, messages)
         psnr_val = compute_psnr(encoded_images, images)
         ssim_val = compute_ssim(encoded_images, images)
         return {

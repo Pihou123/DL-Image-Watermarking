@@ -81,14 +81,16 @@ def evaluate_noise(
 
     for images, _ in tqdm(val_loader, desc=f"  {noise_name}", leave=False):
         images = images.to(device)
-        message_length = int(model.model_cfg["message_length"])
+        message_length = int(model.model_cfg.get("payload_length", model.model_cfg["message_length"]))
         messages = torch.randint(
             0, 2, (images.shape[0], message_length), dtype=torch.float32, device=device
         )
 
-        encoded, noised, decoded, _ = model.encoder_decoder(images, messages)
+        expanded = model._expand_message(messages)
+        encoded, noised, decoded, _ = model.encoder_decoder(images, expanded)
+        compressed, _ = model._compress_message(decoded)
 
-        bit_accs.append(_bit_accuracy(decoded, messages))
+        bit_accs.append(_bit_accuracy(compressed, messages))
         psnrs.append(compute_psnr(encoded, images))
         ssims.append(compute_ssim(encoded, images))
 

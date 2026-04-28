@@ -1,4 +1,4 @@
-﻿experiment:
+experiment:
   name: hidden_refactor_baseline
   seed: 42
   device: auto
@@ -37,7 +37,8 @@ train:
   validate_every: 1
 
 model:
-  message_length: 30
+  message_length: 60
+  payload_length: 30
   encoder_blocks: 4
   encoder_channels: 64
   decoder_blocks: 7
@@ -48,8 +49,9 @@ model:
   use_vgg: false
   loss_weights:
     encoder: 1.0
-    decoder: 1.0
+    decoder: 2.0
     adversarial: 1.0
+    payload: 2.0
 
 noise:
   strategy: weighted_random
