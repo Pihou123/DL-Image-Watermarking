@@ -1,7 +1,8 @@
 """Watermark embedding and extraction for arbitrary-size images.
 
-Uses patch-based tiling: slices the image into 64x64 patches, embeds/extracts
-the same message on each patch, then stitches back / votes.
+Uses patch-based tiling: slices the image into patches matching
+dataset.image_size in the checkpoint/config, embeds/extracts the same message
+on each patch, then stitches back / votes.
 
 Usage (embed):
     python scripts/inference.py embed \
@@ -42,7 +43,7 @@ from src.engine.checkpoint import load_checkpoint
 from src.models.hidden_system import HiddenSystem
 from src.noise.manager import NoiseManager
 
-PATCH_SIZE = 64
+DEFAULT_PATCH_SIZE = 64
 
 
 def parse_args() -> argparse.Namespace:
@@ -135,20 +136,36 @@ def _image_to_patches(img: Image.Image, patch_size: int) -> tuple[list[Image.Ima
     return patches, orig_w, orig_h, cols, rows
 
 
-def _patches_to_image(patches: list[Image.Image], orig_w: int, orig_h: int, cols: int, rows: int) -> Image.Image:
+def _patches_to_image(
+    patches: list[Image.Image],
+    orig_w: int,
+    orig_h: int,
+    cols: int,
+    rows: int,
+    patch_size: int,
+) -> Image.Image:
     out = Image.new("RGB", (orig_w, orig_h))
     idx = 0
     for row in range(rows):
         for col in range(cols):
-            out.paste(patches[idx], (col * PATCH_SIZE, row * PATCH_SIZE))
+            out.paste(patches[idx], (col * patch_size, row * patch_size))
             idx += 1
     return out
+
+
+def _patch_size_from_config(cfg: dict) -> int:
+    image_size = cfg.get("dataset", {}).get("image_size", [DEFAULT_PATCH_SIZE, DEFAULT_PATCH_SIZE])
+    height, width = [int(v) for v in image_size]
+    if height != width:
+        raise ValueError(f"Only square inference patches are supported, got image_size={image_size}")
+    return height
 
 
 def _build_model(config_path: str, ckpt_path: str, device: torch.device):
     cfg = load_config(config_path)
 
     image_size = tuple(cfg["dataset"].get("image_size", [64, 64]))
+    patch_size = _patch_size_from_config(cfg)
     noise_manager = NoiseManager(cfg["noise"], device=device).to(device)
     model = HiddenSystem(
         model_cfg=cfg["model"],
@@ -160,7 +177,7 @@ def _build_model(config_path: str, ckpt_path: str, device: torch.device):
 
     load_checkpoint(ckpt_path, model=model, device=device, scaler=None, strict=False)
     model.eval()
-    return model, int(cfg["model"].get("payload_length", cfg["model"]["message_length"]))
+    return model, int(cfg["model"].get("payload_length", cfg["model"]["message_length"])), patch_size
 
 
 @torch.no_grad()
@@ -168,12 +185,12 @@ def embed(args: argparse.Namespace) -> None:
     device = resolve_device(args.device)
     set_seed(42)
 
-    model, msg_len = _build_model(args.config, args.ckpt, device)
+    model, msg_len, patch_size = _build_model(args.config, args.ckpt, device)
     message_bits = _msg_to_bits(args.message, msg_len).to(device)
 
     img = _load_image(args.image).convert("RGB")
     orig_w, orig_h = img.size
-    patches, pad_w, pad_h, cols, rows = _image_to_patches(img, PATCH_SIZE)
+    patches, pad_w, pad_h, cols, rows = _image_to_patches(img, patch_size)
 
     tf = transforms.Compose([
         transforms.ToTensor(),
@@ -188,14 +205,15 @@ def embed(args: argparse.Namespace) -> None:
     for patch in patches:
         tensor = tf(patch).unsqueeze(0).to(device)
         expanded = model._expand_message(message_bits)
-        encoded = model.encoder_decoder.encoder(tensor, expanded)
+        encoded = model.encoder_decoder.encode(tensor, expanded)
         encoded_patch = inv_tf(encoded[0].cpu().clamp(-1, 1))
         encoded_patches.append(encoded_patch)
 
-    full = _patches_to_image(encoded_patches, pad_w, pad_h, cols, rows)
+    full = _patches_to_image(encoded_patches, pad_w, pad_h, cols, rows, patch_size)
     full = full.crop((0, 0, orig_w, orig_h))
     full.save(args.output)
     print(f"Watermarked image saved to: {args.output}")
+    print(f"Patch size: {patch_size} x {patch_size}")
 
 
 @torch.no_grad()
@@ -203,10 +221,10 @@ def extract(args: argparse.Namespace) -> None:
     device = resolve_device(args.device)
     set_seed(42)
 
-    model, _ = _build_model(args.config, args.ckpt, device)
+    model, _, patch_size = _build_model(args.config, args.ckpt, device)
 
     img = _load_image(args.image).convert("RGB")
-    patches, _, _, _, _ = _image_to_patches(img, PATCH_SIZE)
+    patches, _, _, _, _ = _image_to_patches(img, patch_size)
 
     tf = transforms.Compose([
         transforms.ToTensor(),
@@ -224,6 +242,7 @@ def extract(args: argparse.Namespace) -> None:
     all_bits = np.array(all_bits)
     majority = (all_bits.mean(axis=0) >= 0.5).astype(int)
 
+    print(f"Patch size: {patch_size} x {patch_size}")
     print(f"Total patches: {all_bits.shape[0]}")
     print(f"Extracted bits (majority vote): {''.join(map(str, majority))}")
     print(f"Decoded message: {_bits_to_msg(majority)}")

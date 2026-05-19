@@ -1,5 +1,6 @@
 ﻿"""Pluggable noise layers and policies."""
 
+from .adversarial import AdversarialNoiseLayer
 from .crop import CropLayer
 from .cropout import CropoutLayer
 from .dropout import DropoutLayer
@@ -13,6 +14,7 @@ from .wechat_compress import WechatCompressionLayer
 from .registry import create_noise, register_noise
 
 __all__ = [
+    "AdversarialNoiseLayer",
     "CropLayer",
     "CropoutLayer",
     "DropoutLayer",

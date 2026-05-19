@@ -66,11 +66,20 @@ class Trainer:
                 "train_bit_error": train_metrics.get("bit_error", 0.0),
                 "train_psnr": train_metrics.get("psnr", float("nan")),
                 "train_ssim": train_metrics.get("ssim", float("nan")),
+                "train_encoder_base_mse": train_metrics.get("encoder_base_mse", float("nan")),
+                "train_encoder_rgb_mse": train_metrics.get("encoder_rgb_mse", float("nan")),
+                "train_encoder_vgg_mse": train_metrics.get("encoder_vgg_mse", float("nan")),
+                "train_encoder_yuv_mse": train_metrics.get("encoder_yuv_mse", float("nan")),
+                "train_adversarial_noise_mse": train_metrics.get("adversarial_noise_mse", float("nan")),
                 "val_loss": val_metrics.get("loss", float("nan")),
                 "val_bit_acc": val_metrics.get("bit_acc", float("nan")),
                 "val_bit_error": val_metrics.get("bit_error", float("nan")),
                 "val_psnr": val_metrics.get("psnr", float("nan")),
                 "val_ssim": val_metrics.get("ssim", float("nan")),
+                "val_encoder_base_mse": val_metrics.get("encoder_base_mse", float("nan")),
+                "val_encoder_rgb_mse": val_metrics.get("encoder_rgb_mse", float("nan")),
+                "val_encoder_vgg_mse": val_metrics.get("encoder_vgg_mse", float("nan")),
+                "val_encoder_yuv_mse": val_metrics.get("encoder_yuv_mse", float("nan")),
             }
             self.history.append(row)
 

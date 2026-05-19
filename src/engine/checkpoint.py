@@ -29,6 +29,8 @@ def save_checkpoint(
         "optimizer_discriminator": model.optimizer_discriminator.state_dict(),
         "config": config,
     }
+    if getattr(model, "optimizer_adversarial_noise", None) is not None:
+        payload["optimizer_adversarial_noise"] = model.optimizer_adversarial_noise.state_dict()
 
     if scaler is not None:
         payload["scaler"] = scaler.state_dict()
@@ -58,6 +60,11 @@ def load_checkpoint(
         model.optimizer_encoder_decoder.load_state_dict(payload["optimizer_encoder_decoder"])
     if "optimizer_discriminator" in payload:
         model.optimizer_discriminator.load_state_dict(payload["optimizer_discriminator"])
+    if (
+        getattr(model, "optimizer_adversarial_noise", None) is not None
+        and "optimizer_adversarial_noise" in payload
+    ):
+        model.optimizer_adversarial_noise.load_state_dict(payload["optimizer_adversarial_noise"])
     if scaler is not None and "scaler" in payload:
         scaler.load_state_dict(payload["scaler"])
 

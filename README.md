@@ -8,7 +8,9 @@ This repository provides a refactored, modular implementation for a deep-learnin
 - Centralized configuration with CLI overrides
 - Real-time training progress bar with key metrics (`loss`, `bit_acc`, `bit_error`)
 - Pluggable noise architecture for easy extension
+- Optional STN, MCA, Gabor attention, mixed VGG perceptual loss, curriculum noise, and adversarial noise experiments
 - Visual outputs: triplet image grid, difference heatmap, training curves
+- Gradio Web UI for watermark embedding, direct extraction, and attack demonstration
 
 ## Quick Start
 
@@ -36,6 +38,14 @@ python scripts/evaluate.py --config configs/base.yaml --run_dir outputs/runs/<yo
 ```bash
 python scripts/export_results.py --run_dir outputs/runs/<your_run>
 ```
+
+6. Launch the Web UI for demonstration:
+
+```bash
+python ui/app.py
+```
+
+In the UI, select a `.pth` checkpoint, embed a text watermark into an image, and the generated watermarked image will be synchronized directly to the extraction and attack demonstration panels. Supported local attacks include JPEG compression, Gaussian noise, Gaussian blur, resize, center crop, dropout occlusion, and color quantization. WeChat compression is intentionally left to the real WeChat workflow for demonstration.
 
 More details:
 

@@ -7,7 +7,7 @@ import torch
 import torch.nn as nn
 
 # Register built-in layers.
-from . import crop, cropout, dropout, gaussian_blur, gaussian_noise  # noqa: F401
+from . import adversarial, crop, cropout, dropout, gaussian_blur, gaussian_noise  # noqa: F401
 from . import identity, jpeg_compression, quantization, resize, wechat_compress  # noqa: F401
 from .registry import create_noise
 
@@ -28,9 +28,20 @@ class NoiseManager(nn.Module):
         self.noise_cfg = noise_cfg
         self.strategy = str(noise_cfg.get("strategy", "single_random")).lower()
 
-        layer_configs = noise_cfg.get("layers", [])
+        layer_configs = list(noise_cfg.get("layers", []))
         if not layer_configs:
             layer_configs = [{"name": "identity", "probability": 1.0, "params": {}}]
+        adversarial_cfg = dict(noise_cfg.get("adversarial", {}))
+        if bool(adversarial_cfg.get("enabled", False)):
+            has_adversarial = any(str(layer.get("name", "")).lower() == "adversarial" for layer in layer_configs)
+            if not has_adversarial:
+                layer_configs.append(
+                    {
+                        "name": "adversarial",
+                        "probability": float(adversarial_cfg.get("probability", 0.2)),
+                        "params": dict(adversarial_cfg.get("params", {})),
+                    }
+                )
 
         self.layers = nn.ModuleDict()
         self.layer_specs: list[dict[str, Any]] = []
@@ -74,6 +85,24 @@ class NoiseManager(nn.Module):
             applied.append(spec["name"])
 
         return out, {"applied_noise": applied}
+
+    def adversarial_parameters(self):
+        params = []
+        for module in self.layers.values():
+            if bool(getattr(module, "is_adversarial", False)):
+                params.extend(list(module.parameters()))
+        return params
+
+    def has_adversarial_layers(self) -> bool:
+        return any(bool(getattr(module, "is_adversarial", False)) for module in self.layers.values())
+
+    def apply_adversarial(self, encoded: torch.Tensor, cover: torch.Tensor) -> torch.Tensor:
+        out = encoded
+        for spec in self.layer_specs:
+            module = self.layers[spec["key"]]
+            if bool(getattr(module, "is_adversarial", False)):
+                out = module(out, cover)
+        return out
 
     def _select_specs(self, epoch: int | None) -> list[dict[str, Any]]:
         if self.strategy == "chain":
@@ -120,5 +149,10 @@ class NoiseManager(nn.Module):
             start = int(stage.get("start_epoch", 1))
             end = int(stage.get("end_epoch", start))
             if start <= epoch <= end:
-                return dict(stage.get("probabilities", {}))
+                probabilities = dict(stage.get("probabilities", {}))
+                if "default_probability" in stage:
+                    default_probability = float(stage["default_probability"])
+                    for spec in self.layer_specs:
+                        probabilities.setdefault(spec["name"], default_probability)
+                return probabilities
         return None

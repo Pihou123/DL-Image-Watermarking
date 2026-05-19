@@ -206,17 +206,50 @@ marimo/_static/
 marimo/_lsp/
 __marimo__/
 
-#code
+# Project data, checkpoints, and generated artifacts
 /data/
-/.vscode/
-data/
-**/data/
-*.zip
-*.tar.gz
-*.pth
-*.npy
 /outputs/*
 !/outputs/.gitkeep
+
+# Model weights and tensor/data artifacts
+*.pth
+*.pt
+*.ckpt
+*.onnx
+*.engine
+*.safetensors
+*.npy
+*.npz
+*.pkl
+*.pickle
+*.h5
+*.hdf5
+
+# Archives and downloaded datasets
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.rar
+*.7z
+*.gz
+
+# Generated experiment/media outputs
+*.mp4
+*.avi
+*.mov
+*.gif
+*.tiff
+*.tif
+*.webp
+*.psd
+*.ai
+*.eps
+
+# Keep source-controlled docs/images possible under docs if needed.
+!docs/**/*.png
+!docs/**/*.jpg
+!docs/**/*.jpeg
 
 # AI assistant settings and docs
 .claude/
@@ -228,9 +261,47 @@ AGENTS.md
 *.code-workspace
 .trae/
 
+# OS and local shell noise
+.DS_Store
+Thumbs.db
+desktop.ini
+*.tmp
+*.temp
+*.bak
+*.swp
+*.swo
+*.orig
+*.pid
+
 # Project personal plans (sensitive to research direction)
 improvement_plan.md
 
 # Local changelog (personal notes, not for repo)
 CHANGELOG.md
+
+# Local experiment result notes
+local_experiment_results.md
+
+# Local handoff / private notes
+PROJECT_HANDOFF.md
+*_HANDOFF.md
+
+# Thesis and private writing artifacts
+*.doc
+*.docx
+*.pdf
+*.wps
+*.et
+*.dps
+~$*
+
+# Optional local environment files used on rented GPUs
+.env.*
+!.env.example
+conda-meta/
+wandb/
+mlruns/
+lightning_logs/
+runs/
+tensorboard/
 

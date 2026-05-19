@@ -1,32 +1,28 @@
 experiment:
-  name: hidden_refactor_baseline
+  name: hidden_large256_64bit
   seed: 42
   device: auto
   output_root: outputs/runs
 
 dataset:
-  # Mode A (ImageFolder): set train_dir and val_dir to folders with class subdirectories.
-  # Mode B (Flat folder auto split): set source_dir to a folder of images.
   train_dir: data/train
   val_dir: data/val
   source_dir: data/mirflickr25k
   train_split: 0.9
   split_seed: 42
-  image_size: [64, 64]
-  num_workers: 4
+  image_size: [256, 256]
+  num_workers: 8
   pin_memory: true
   preprocess:
-    # To keep watermark quality/stability on mixed-size datasets,
-    # resize shorter side first (keep aspect ratio), then crop to image_size.
-    train_resize_short_side: 96
-    val_resize_short_side: 96
+    train_resize_short_side: 288
+    val_resize_short_side: 288
     interpolation: bicubic
     antialias: true
     random_hflip_prob: 0.0
 
 train:
-  batch_size: 32
-  epochs: 60
+  batch_size: 8
+  epochs: 100
   start_epoch: 1
   lr_encoder_decoder: 0.001
   lr_discriminator: 0.001
@@ -34,26 +30,26 @@ train:
   use_amp: true
   grad_clip_norm: 1.0
   log_interval: 10
-  save_every: 1
+  save_every: 5
   validate_every: 1
 
 model:
-  message_length: 60
-  payload_length: 30
-  encoder_blocks: 4
-  encoder_channels: 64
-  use_encoder_mca: false
+  message_length: 128
+  payload_length: 64
+  encoder_blocks: 5
+  encoder_channels: 128
+  use_encoder_mca: true
   encoder_mca_blocks: 1
   encoder_mca_dilations: [1, 2, 5]
-  use_gabor_attention: false
+  use_gabor_attention: true
   gabor_kernel_size: 15
   gabor_orientations: 8
   gabor_sigmas: [3.0, 5.0]
   gabor_gamma: 0.5
   gabor_wavelength: 8.0
   gabor_attention_strength: 0.5
-  decoder_blocks: 7
-  decoder_channels: 64
+  decoder_blocks: 8
+  decoder_channels: 128
   use_decoder_stn: false
   decoder_stn_channels: 32
   decoder_stn_scale: 0.1
@@ -64,11 +60,10 @@ model:
   discriminator_channels: 64
   use_discriminator: true
   use_vgg: false
-  # pixel: RGB MSE only; vgg: VGG feature MSE only; mixed: RGB MSE + vgg_loss_weight * VGG feature MSE.
   vgg_loss_mode: vgg
   vgg_loss_weight: 0.03
   use_adversarial_noise_training: false
-  residual_embedding: false
+  residual_embedding: true
   residual_scale: 0.5
   residual_activation: tanh
   clamp_encoded: true
@@ -79,12 +74,11 @@ model:
     encoder: 1.0
     decoder: 2.0
     adversarial: 1.0
-    payload: 2.0
+    payload: 3.0
 
 noise:
   strategy: weighted_random
   adversarial:
-    # Disabled by default. When enabled, this appends adversarial noise to the full original noise pool.
     enabled: false
     probability: 0.2
     params:
@@ -92,11 +86,9 @@ noise:
       channels: 32
       blocks: 3
   layers:
-    # --- pass-through ---
     - name: identity
       probability: 0.10
       params: {}
-    # --- compression / signal-processing ---
     - name: jpeg
       probability: 0.9
       params:
@@ -110,17 +102,14 @@ noise:
       probability: 0.9
       params:
         fourier_terms: 10
-    # --- pixel-level noise ---
     - name: gaussian_noise
       probability: 0.9
       params:
         std: 0.05
-    # --- spatial filtering ---
     - name: gaussian_blur
       probability: 0.10
       params:
         sigma: 1.0
-    # --- image editing / erasure ---
     - name: dropout
       probability: 0.10
       params:
@@ -133,7 +122,6 @@ noise:
       probability: 0.15
       params:
         keep_ratio: 0.5
-    # --- geometric ---
     - name: resize
       probability: 0.9
       params:
@@ -143,22 +131,22 @@ noise:
     enabled: true
     schedule:
       - start_epoch: 1
-        end_epoch: 20
+        end_epoch: 25
         default_probability: 0.0
         probabilities:
           identity: 0.4
           jpeg: 0.3
           quantization: 0.3
       - start_epoch: 21
-        end_epoch: 40
+        end_epoch: 60
         default_probability: 0.0
         probabilities:
           jpeg: 0.25
           quantization: 0.25
           gaussian_noise: 0.2
           resize: 0.3
-      - start_epoch: 41
-        end_epoch: 60
+      - start_epoch: 61
+        end_epoch: 100
         probabilities:
           identity: 0.1
           jpeg: 0.9
@@ -172,8 +160,8 @@ noise:
           resize: 0.9
 
 visualization:
-  sample_count: 8
-  save_every: 1
+  sample_count: 4
+  save_every: 5
 
 logging:
   level: INFO

@@ -1,12 +1,8 @@
-﻿# Keep the torch stack aligned with conda env `dlwm`.
-# Verified from dlwm on 2026-04-23:
-#   pytorch=2.5.1
-#   pytorch-cuda=12.4
-#   torchvision=0.20.1
-# Do not reinstall torch/cuda from pip unless you intentionally migrate environments.
-
+# Install PyTorch and TorchVision separately for your CUDA version.
+# Verified stack: Python 3.10, PyTorch 2.5.1, TorchVision 0.20.1, CUDA 12.4.
 numpy==2.2.6
 PyYAML>=6.0
 tqdm>=4.66.0
 matplotlib>=3.7.0
 tensorboard>=2.20.0
+gradio>=6.14.0
