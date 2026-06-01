@@ -1,24 +1,4 @@
-"""Watermark embedding and extraction for arbitrary-size images.
-
-Uses patch-based tiling: slices the image into patches matching
-dataset.image_size in the checkpoint/config, embeds/extracts the same message
-on each patch, then stitches back / votes.
-
-Usage (embed):
-    python scripts/inference.py embed \
-        --image input.jpg \
-        --output watermarked.png \
-        --message "hello" \
-        --ckpt outputs/runs/<run>/checkpoints/best.pth \
-        --config configs/base.yaml
-
-Usage (extract):
-    python scripts/inference.py extract \
-        --image watermarked.png \
-        --message_len 30 \
-        --ckpt outputs/runs/<run>/checkpoints/best.pth \
-        --config configs/base.yaml
-"""
+"""Patch-based watermark embedding and extraction."""
 
 from __future__ import annotations
 
@@ -101,20 +81,20 @@ def _load_image(path: str) -> Image.Image:
 
 
 def _pad_to_multiple(img: Image.Image, multiple: int) -> Image.Image:
-    """Pad image to next multiple using mirror reflection to avoid black borders."""
+    """Pad image edges to a multiple of the patch size."""
     w, h = img.size
     new_w = ((w + multiple - 1) // multiple) * multiple
     new_h = ((h + multiple - 1) // multiple) * multiple
     if new_w != w or new_h != h:
         padded = Image.new("RGB", (new_w, new_h))
         padded.paste(img, (0, 0))
-        # Mirror the edge pixels to fill the padded strip area instead of leaving black
+        # Extend edge pixels into the padding.
         if new_w > w:
             edge = img.crop((w - 1, 0, w, h))
             stretched = edge.resize((new_w - w, h), Image.LANCZOS)
             padded.paste(stretched, (w, 0))
         if new_h > h:
-            # Include the right-padded area so the bottom strip is continuous
+            # Keep the bottom strip continuous.
             edge = padded.crop((0, h - 1, new_w, h))
             stretched = edge.resize((new_w, new_h - h), Image.LANCZOS)
             padded.paste(stretched, (0, h))
@@ -123,7 +103,7 @@ def _pad_to_multiple(img: Image.Image, multiple: int) -> Image.Image:
 
 
 def _image_to_patches(img: Image.Image, patch_size: int) -> tuple[list[Image.Image], int, int, int, int]:
-    """Slice image into patches. Returns (patches, orig_w, orig_h, cols, rows)."""
+    """Split an image into patches."""
     img = _pad_to_multiple(img, patch_size)
     orig_w, orig_h = img.size
     cols = orig_w // patch_size

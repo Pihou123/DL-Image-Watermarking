@@ -9,14 +9,7 @@ from .registry import register_noise
 
 @register_noise("resize")
 class ResizeLayer(BaseNoiseLayer):
-    """
-    Randomly scales the image up or down, then bilinearly resizes back to
-    the original resolution. This simulates common image resizing operations
-    (e.g. down-sampling for web upload, then zooming back).
-
-    ratio_range controls the scale factor: (0.5, 0.5) means exactly 50% size;
-    (0.8, 1.2) randomly scales between 80% and 120% of original.
-    """
+    """Scale the image and resize it back."""
 
     def __init__(self, ratio_min: float = 0.5, ratio_max: float = 1.0, device: torch.device | None = None):
         super().__init__()

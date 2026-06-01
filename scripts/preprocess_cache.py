@@ -1,14 +1,4 @@
-"""Preprocess images into cached tensors to eliminate PIL decode + resize overhead.
-
-Usage:
-    python scripts/preprocess_cache.py --config configs/base.yaml
-    python scripts/preprocess_cache.py --config configs/base.yaml --num_workers 8
-
-This script reads the dataset config, applies resize+ToTensor to every image, and
-saves the resulting tensors to a cache directory.  The cached tensors retain the
-post-resize dimensions so that RandomCrop/CenterCrop can still be randomized
-at training time.
-"""
+"""Cache resized dataset tensors."""
 
 from __future__ import annotations
 
@@ -69,7 +59,7 @@ def _resize_transform(dataset_cfg: dict, is_train: bool) -> transforms.Compose:
 
 
 def _process_one(args_tuple: tuple[str, str, dict]) -> tuple[str, str]:
-    """Process a single image: load, resize, save as .pt. Returns (name, status)."""
+    """Resize and cache one image."""
     img_path_str, out_dir_str, dataset_cfg = args_tuple
     img_path = Path(img_path_str)
     out_dir = Path(out_dir_str)
@@ -94,7 +84,7 @@ def main() -> None:
     cfg = load_config(args.config)
     dataset_cfg = cfg["dataset"]
 
-    # Determine image paths (same logic as loaders.py).
+    # Match the loader split.
     train_dir = Path(dataset_cfg.get("train_dir", "")) if dataset_cfg.get("train_dir") else None
     val_dir = Path(dataset_cfg.get("val_dir", "")) if dataset_cfg.get("val_dir") else None
 
@@ -130,7 +120,6 @@ def main() -> None:
     print(f"Train images: {len(train_paths)}")
     print(f"Val images:   {len(val_paths)}")
 
-    # Prepare cache directory.
     dataset_name = dataset_cfg.get("source_dir", dataset_cfg.get("train_dir", "dataset"))
     dataset_name = Path(dataset_name).name
     cache_root = Path(args.cache_dir) if args.cache_dir else Path("data") / f"cache_{dataset_name}"
@@ -144,7 +133,6 @@ def main() -> None:
     print(f"Target image size: {image_size}")
     print()
 
-    # Build task list.
     tasks: list[tuple[str, str, dict]] = []
     for p in train_paths:
         tasks.append((str(p), str(train_cache), dataset_cfg))
@@ -173,7 +161,6 @@ def main() -> None:
     ok = len(tasks) - skipped - errors
     print(f"\nComplete: {ok} ok, {skipped} skipped (already cached), {errors} errors")
 
-    # Save metadata.
     meta = {
         "image_size": list(image_size),
         "train_count": len(list(train_cache.glob("*.pt"))),

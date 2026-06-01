@@ -6,21 +6,14 @@ from typing import Any
 import torch
 import torch.nn as nn
 
-# Register built-in layers.
+# Load built-in layers.
 from . import adversarial, crop, cropout, dropout, gaussian_blur, gaussian_noise  # noqa: F401
 from . import identity, jpeg_compression, quantization, resize, wechat_compress  # noqa: F401
 from .registry import create_noise
 
 
 class NoiseManager(nn.Module):
-    """Central noise scheduler.
-
-    Supported strategies:
-      - single_random: uniform random noise per batch
-      - weighted_random: weighted random by probability
-      - chain: apply every configured noise in order
-      - curriculum: probabilities can change by epoch schedule
-    """
+    """Select and apply configured noise layers."""
 
     def __init__(self, noise_cfg: dict[str, Any], device: torch.device):
         super().__init__()
@@ -62,7 +55,7 @@ class NoiseManager(nn.Module):
             )
 
     def _build_noise_module(self, name: str, params: dict[str, Any]) -> nn.Module:
-        # Try with explicit device first, then fallback for layers that do not accept it.
+        # Support layers without a device argument.
         with_device = dict(params)
         with_device.setdefault("device", self.device)
 

@@ -36,7 +36,7 @@ class QuantizationNoise(BaseNoiseLayer):
         self.register_buffer("scales", torch.tensor(scales, dtype=torch.float32, device=device))
 
     def _fourier_rounding(self, tensor: torch.Tensor) -> torch.Tensor:
-        # Expand tensor to [1, B, C, H, W] so Fourier-term dimension is separated from batch dimension.
+        # Add the Fourier-term dimension.
         tensor_expanded = tensor.unsqueeze(0)
         scales = self.scales.view(-1, 1, 1, 1, 1)
         weights = self.weights.view(-1, 1, 1, 1, 1)

@@ -9,10 +9,7 @@ from .registry import register_noise
 
 @register_noise("crop")
 class CropLayer(BaseNoiseLayer):
-    """
-    Randomly crops a contiguous region of the image, then bilinearly
-    resizes it back to the original resolution.
-    """
+    """Crop a random region and resize it back."""
 
     def __init__(self, keep_ratio: float = 0.7, device: torch.device | None = None):
         super().__init__()

@@ -14,12 +14,7 @@ IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".bmp", ".webp"}
 
 
 class CachedTensorDataset(Dataset):
-    """Dataset backed by pre-processed .pt tensor files.
-
-    Each file contains a torch.Tensor of shape [C, H, W] that has been
-    resized (aspect-preserving).  RandomCrop / CenterCrop and Normalize
-    are applied on-the-fly.
-    """
+    """Dataset backed by resized .pt tensors."""
 
     def __init__(self, cache_dir: Path, crop_size: tuple[int, int], normalize: bool = True, is_train: bool = True):
         self.cache_dir = Path(cache_dir)
@@ -35,7 +30,7 @@ class CachedTensorDataset(Dataset):
 
     def __getitem__(self, index: int):
         tensor = torch.load(self.files[index], weights_only=True)
-        # tensor shape: [C, H, W], values in [0, 1]
+        # Cached tensors use [C, H, W] and [0, 1].
         _, h, w = tensor.shape
         crop_h, crop_w = self.crop_size
 
@@ -68,7 +63,7 @@ class FlatImageDataset(Dataset):
         image = Image.open(path).convert("RGB")
         if self.transform is not None:
             image = self.transform(image)
-        # Keep ImageFolder-compatible label shape.
+        # Match ImageFolder output.
         return image, 0
 
 
@@ -143,7 +138,7 @@ def _build_transforms(dataset_cfg: dict) -> dict[str, transforms.Compose]:
     random_hflip_prob = float(preprocess_cfg.get("random_hflip_prob", 0.0))
 
     train_ops = [
-        # Keep aspect ratio first to avoid zero-padding artifacts on small images.
+        # Preserve aspect ratio before cropping.
         transforms.Resize(train_short_side, interpolation=interpolation, antialias=antialias),
         transforms.RandomCrop(crop_size),
     ]

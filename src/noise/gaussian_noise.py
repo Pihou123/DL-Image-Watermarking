@@ -8,7 +8,7 @@ from .registry import register_noise
 
 @register_noise("gaussian_noise")
 class GaussianNoiseLayer(BaseNoiseLayer):
-    """Adds zero-mean Gaussian noise to the encoded image."""
+    """Add zero-mean Gaussian noise."""
 
     def __init__(self, std: float = 0.05, device: torch.device | None = None):
         super().__init__()

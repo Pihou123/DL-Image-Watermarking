@@ -10,7 +10,7 @@ from .registry import register_noise
 
 
 def _make_gaussian_kernel_2d(sigma: float, device: torch.device) -> torch.Tensor:
-    """Build a 2D Gaussian kernel sized 6*sigma+1."""
+    """Build a 2D Gaussian kernel."""
     radius = int(math.ceil(3.0 * sigma))
     size = 2 * radius + 1
     coords = torch.arange(size, dtype=torch.float32, device=device) - radius
@@ -22,7 +22,7 @@ def _make_gaussian_kernel_2d(sigma: float, device: torch.device) -> torch.Tensor
 
 @register_noise("gaussian_blur")
 class GaussianBlurLayer(BaseNoiseLayer):
-    """Applies Gaussian blur via depthwise convolution."""
+    """Apply Gaussian blur."""
 
     def __init__(self, sigma: float = 1.0, device: torch.device | None = None):
         super().__init__()

@@ -9,7 +9,7 @@ from .registry import register_noise
 
 @register_noise("adversarial")
 class AdversarialNoiseLayer(BaseNoiseLayer):
-    """Trainable CNN perturbation layer constrained by epsilon."""
+    """Trainable bounded perturbation layer."""
 
     is_adversarial = True
 

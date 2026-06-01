@@ -17,7 +17,7 @@ def _gaussian_kernel(size: int, sigma: float) -> torch.Tensor:
 
 
 def _gaussian_filter(channels: int, kernel_size: int, sigma: float, device: torch.device) -> torch.Tensor:
-    """Build a 2D Gaussian filter kernel of shape [C, 1, H, W] for depthwise conv."""
+    """Build a depthwise 2D Gaussian kernel."""
     k1d = _gaussian_kernel(kernel_size, sigma).to(device)
     k2d = k1d[:, None] * k1d[None, :]
     kernel = k2d.expand(channels, 1, kernel_size, kernel_size).contiguous()
@@ -25,12 +25,7 @@ def _gaussian_filter(channels: int, kernel_size: int, sigma: float, device: torc
 
 
 def compute_psnr(encoded: torch.Tensor, cover: torch.Tensor) -> float:
-    """
-    Compute PSNR between encoded and cover images.
-
-    Images are assumed in [-1, 1] range; normalized to [0, 1] before computation.
-    Returns PSNR in dB.
-    """
+    """Compute PSNR in dB for tensors in [-1, 1]."""
     encoded_01 = (encoded.detach().float().clamp(-1, 1) + 1.0) / 2.0
     cover_01 = (cover.detach().float().clamp(-1, 1) + 1.0) / 2.0
     mse = float(F.mse_loss(encoded_01, cover_01).item())
@@ -47,13 +42,7 @@ def compute_ssim(
     k1: float = 0.01,
     k2: float = 0.03,
 ) -> float:
-    """
-    Compute SSIM between encoded and cover images.
-
-    Images are assumed in [-1, 1] range; normalized to [0, 1] before computation.
-    Standard SSIM parameters: window_size=11, sigma=1.5, K1=0.01, K2=0.03.
-    Returns mean SSIM over the batch.
-    """
+    """Compute mean SSIM for tensors in [-1, 1]."""
     encoded_01 = (encoded.detach().float().clamp(-1, 1) + 1.0) / 2.0
     cover_01 = (cover.detach().float().clamp(-1, 1) + 1.0) / 2.0
     device = encoded.device

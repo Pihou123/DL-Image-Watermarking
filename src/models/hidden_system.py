@@ -83,16 +83,16 @@ class HiddenSystem(nn.Module):
             param.requires_grad_(requires_grad)
 
     def _expand_message(self, messages: torch.Tensor) -> torch.Tensor:
-        """Repeat each bit to create a redundant message for channel coding."""
+        """Expand payload bits with repetition."""
         if self.repeat_factor == 1:
             return messages
         return messages.repeat_interleave(self.repeat_factor, dim=1)
 
     def _compress_message(self, decoded: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
-        """Average over repeated copies to recover the original payload."""
+        """Average repeated payload bits."""
         if self.repeat_factor == 1:
             return decoded, decoded
-        # Reshape to [B, payload_length, repeat_factor] and average
+        # Average repeated bits.
         b = decoded.shape[0]
         reshaped = decoded.view(b, self.payload_length, self.repeat_factor)
         compressed = reshaped.mean(dim=2)
@@ -141,7 +141,7 @@ class HiddenSystem(nn.Module):
 
     @staticmethod
     def _rgb_to_yuv(image: torch.Tensor) -> torch.Tensor:
-        # Model tensors are normalized to [-1, 1]. Convert to [0, 1] before YUV transform.
+        # Convert [-1, 1] to [0, 1].
         x = (image + 1.0) / 2.0
         r = x[:, 0:1]
         g = x[:, 1:2]

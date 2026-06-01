@@ -8,14 +8,7 @@ from .registry import register_noise
 
 @register_noise("cropout")
 class CropoutLayer(BaseNoiseLayer):
-    """
-    Keeps a random contiguous sub-rectangle of the encoded image and replaces
-    the surrounding area with pixels from the cover (original) image.
-
-    This simulates an attacker cropping an image and pasting the remaining
-    watermarked portion into an un-watermarked source.
-    Implementation follows the original HiDDeN paper (Zhu et al., 2018).
-    """
+    """Keep one encoded region and fill the rest from the cover."""
 
     def __init__(self, keep_ratio: float = 0.3, device: torch.device | None = None):
         super().__init__()

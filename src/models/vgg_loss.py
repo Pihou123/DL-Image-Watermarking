@@ -6,10 +6,7 @@ from torchvision.models import VGG16_Weights, vgg16
 
 
 class VGGLoss(nn.Module):
-    """Feature extractor for perceptual loss.
-
-    If pretrained weights are unavailable, falls back to randomly initialized VGG.
-    """
+    """VGG feature extractor for perceptual loss."""
 
     def __init__(self, feature_layers: int = 16, device: torch.device | None = None):
         super().__init__()
@@ -26,6 +23,6 @@ class VGGLoss(nn.Module):
             self.features.to(device)
 
     def forward(self, image: torch.Tensor) -> torch.Tensor:
-        # Convert from [-1, 1] to [0, 1] for VGG features.
+        # VGG expects [0, 1].
         x = (image + 1.0) / 2.0
         return self.features(x)

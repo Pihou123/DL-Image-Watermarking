@@ -5,8 +5,7 @@ experiment:
   output_root: outputs/runs
 
 dataset:
-  # Mode A (ImageFolder): set train_dir and val_dir to folders with class subdirectories.
-  # Mode B (Flat folder auto split): set source_dir to a folder of images.
+  # ImageFolder mode uses train_dir/val_dir; flat-folder mode uses source_dir.
   train_dir: data/train
   val_dir: data/val
   source_dir: data/mirflickr25k
@@ -16,8 +15,7 @@ dataset:
   num_workers: 4
   pin_memory: true
   preprocess:
-    # To keep watermark quality/stability on mixed-size datasets,
-    # resize shorter side first (keep aspect ratio), then crop to image_size.
+    # Resize the short side before cropping.
     train_resize_short_side: 96
     val_resize_short_side: 96
     interpolation: bicubic
@@ -64,7 +62,7 @@ model:
   discriminator_channels: 64
   use_discriminator: true
   use_vgg: false
-  # pixel: RGB MSE only; vgg: VGG feature MSE only; mixed: RGB MSE + vgg_loss_weight * VGG feature MSE.
+  # Image loss: pixel, vgg, or mixed.
   vgg_loss_mode: vgg
   vgg_loss_weight: 0.03
   use_adversarial_noise_training: false
@@ -84,7 +82,7 @@ model:
 noise:
   strategy: weighted_random
   adversarial:
-    # Disabled by default. When enabled, this appends adversarial noise to the full original noise pool.
+    # Append adversarial noise when enabled.
     enabled: false
     probability: 0.2
     params:
@@ -92,11 +90,11 @@ noise:
       channels: 32
       blocks: 3
   layers:
-    # --- pass-through ---
+    # Pass-through
     - name: identity
       probability: 0.10
       params: {}
-    # --- compression / signal-processing ---
+    # Compression
     - name: jpeg
       probability: 0.9
       params:
@@ -110,17 +108,17 @@ noise:
       probability: 0.9
       params:
         fourier_terms: 10
-    # --- pixel-level noise ---
+    # Pixel noise
     - name: gaussian_noise
       probability: 0.9
       params:
         std: 0.05
-    # --- spatial filtering ---
+    # Filtering
     - name: gaussian_blur
       probability: 0.10
       params:
         sigma: 1.0
-    # --- image editing / erasure ---
+    # Erasure
     - name: dropout
       probability: 0.10
       params:
@@ -133,7 +131,7 @@ noise:
       probability: 0.15
       params:
         keep_ratio: 0.5
-    # --- geometric ---
+    # Geometry
     - name: resize
       probability: 0.9
       params:

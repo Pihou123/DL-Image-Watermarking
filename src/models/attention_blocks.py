@@ -8,7 +8,7 @@ import torch.nn.functional as F
 
 
 class SpatialTransformer(nn.Module):
-    """Lightweight affine STN initialized as identity."""
+    """Affine STN with identity initialization."""
 
     def __init__(self, in_channels: int = 3, hidden_channels: int = 32, transform_scale: float = 0.1):
         super().__init__()
@@ -46,7 +46,7 @@ class SpatialTransformer(nn.Module):
 
 
 class MultiScaleDilatedBlock(nn.Module):
-    """Parallel dilated convolutions with residual fusion."""
+    """Multi-scale dilated residual block."""
 
     def __init__(self, channels: int, dilations: list[int] | tuple[int, ...] = (1, 2, 5)):
         super().__init__()
@@ -75,7 +75,7 @@ class MultiScaleDilatedBlock(nn.Module):
 
 
 class GaborAttention(nn.Module):
-    """Fixed Gabor filter bank followed by learnable channel attention."""
+    """Gabor channel attention."""
 
     def __init__(
         self,

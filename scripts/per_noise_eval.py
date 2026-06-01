@@ -1,10 +1,4 @@
-"""Per-noise accuracy breakdown using a trained checkpoint.
-
-Usage:
-    python scripts/per_noise_eval.py --run_dir outputs/runs/<run_name>
-    python scripts/per_noise_eval.py --run_dir outputs/runs/<run_name> --ckpt epoch_0015.pth
-    python scripts/per_noise_eval.py --config configs/base.yaml --ckpt <path>
-"""
+"""Evaluate a checkpoint against each configured noise layer."""
 
 from __future__ import annotations
 
@@ -59,12 +53,12 @@ def evaluate_noise(
     noise_module,
     device: torch.device,
 ) -> dict[str, float]:
-    """Run inference with a specific noise layer forced on every sample."""
+    """Evaluate one forced noise layer."""
     original_manager = model.encoder_decoder.noise_manager
     original_layers = model.encoder_decoder.noise_manager.layers
     original_specs = model.encoder_decoder.noise_manager.layer_specs
 
-    # Patch the noise manager to always use the target noise.
+    # Force one noise layer.
     target_key = f"{noise_name}_eval"
     model.encoder_decoder.noise_manager.layers = torch.nn.ModuleDict({target_key: noise_module})
     model.encoder_decoder.noise_manager.layer_specs = [
@@ -94,7 +88,7 @@ def evaluate_noise(
         psnrs.append(compute_psnr(encoded, images))
         ssims.append(compute_ssim(encoded, images))
 
-    # Restore original manager state.
+    # Restore the configured manager.
     model.encoder_decoder.noise_manager.layers = original_layers
     model.encoder_decoder.noise_manager.layer_specs = original_specs
     model.encoder_decoder.noise_manager.strategy = original_manager.strategy
@@ -109,7 +103,6 @@ def evaluate_noise(
 def main() -> None:
     args = parse_args()
 
-    # Resolve config.
     if args.run_dir:
         run_dir = Path(args.run_dir)
         resolved_cfg_path = run_dir / "resolved_config.yaml"
@@ -127,12 +120,10 @@ def main() -> None:
 
     set_seed(int(cfg["experiment"].get("seed", 42)))
 
-    # Build dataloader.
     train_loader, val_loader = build_dataloaders(
         cfg["dataset"], batch_size=int(cfg["train"]["batch_size"])
     )
 
-    # Build model.
     image_size = tuple(cfg["dataset"].get("image_size", [64, 64]))
     noise_manager = NoiseManager(cfg["noise"], device=device).to(device)
     model = HiddenSystem(
@@ -143,7 +134,6 @@ def main() -> None:
         device=device,
     ).to(device)
 
-    # Load checkpoint.
     ckpt_path = Path(args.ckpt)
     if run_dir and not ckpt_path.is_absolute():
         ckpt_path = run_dir / "checkpoints" / args.ckpt
@@ -156,7 +146,7 @@ def main() -> None:
     print(f"Val samples: {len(val_loader.dataset)}")
     print()
 
-    # Collect noise names from the config (preserves order and params).
+    # Preserve config order.
     layer_configs = cfg["noise"].get("layers", [])
     noise_entries: list[tuple[str, dict]] = []
     for entry in layer_configs:
@@ -164,32 +154,28 @@ def main() -> None:
         params = dict(entry.get("params", {}))
         noise_entries.append((name, params))
 
-    # Evaluate.
     results: dict[str, dict[str, float]] = {}
     for noise_name, params in noise_entries:
         try:
             noise_module = create_noise(noise_name, device=device, **params)
         except TypeError:
-            # Some layers don't accept device.
+            # Some layers do not use device.
             noise_module = create_noise(noise_name, **params)
 
         results[noise_name] = evaluate_noise(model, val_loader, noise_name, noise_module, device)
 
-    # Print table.
     header = f"{'Noise':<20} {'bit_acc':>8}  {'PSNR':>7}  {'SSIM':>7}"
     print(header)
     print("-" * len(header))
     for name, m in results.items():
         print(f"{name:<20} {m['bit_acc']:>8.4f}  {m['psnr']:>6.1f}  {m['ssim']:>7.4f}")
 
-    # Average.
     avg_acc = float(np.mean([m["bit_acc"] for m in results.values()]))
     avg_psnr = float(np.mean([m["psnr"] for m in results.values()]))
     avg_ssim = float(np.mean([m["ssim"] for m in results.values()]))
     print("-" * len(header))
     print(f"{'AVERAGE':<20} {avg_acc:>8.4f}  {avg_psnr:>6.1f}  {avg_ssim:>7.4f}")
 
-    # Highlight worst.
     worst_noise = min(results.items(), key=lambda kv: kv[1]["bit_acc"])
     best_noise = max(results.items(), key=lambda kv: kv[1]["bit_acc"])
     print()

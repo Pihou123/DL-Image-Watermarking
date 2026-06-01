@@ -19,7 +19,7 @@ class ConvBNRelu(nn.Module):
 
 
 class DiffConvBNRelu(nn.Module):
-    """Conv block with fixed differential filters for weak signal extraction."""
+    """Differential convolution block."""
 
     def __init__(self, in_channels: int, out_channels: int, diff_scale: float = 1.0):
         super().__init__()
