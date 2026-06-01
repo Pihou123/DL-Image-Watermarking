@@ -207,7 +207,8 @@ marimo/_lsp/
 __marimo__/
 
 # Project data, checkpoints, and generated artifacts
-/data/
+/data/*
+!/data/README.md
 /outputs/*
 !/outputs/.gitkeep
 
