@@ -1,4 +1,4 @@
-﻿"""Pluggable noise layers and policies."""
+"""可插拔噪声层包。"""
 
 from .adversarial import AdversarialNoiseLayer
 from .crop import CropLayer

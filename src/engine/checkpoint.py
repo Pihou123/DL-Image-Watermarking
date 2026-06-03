@@ -1,4 +1,6 @@
-﻿from __future__ import annotations
+"""模型 checkpoint 保存、加载和查找工具。"""
+
+from __future__ import annotations
 
 from pathlib import Path
 from typing import Any

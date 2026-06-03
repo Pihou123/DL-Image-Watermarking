@@ -1,4 +1,6 @@
-﻿from __future__ import annotations
+"""颜色量化近似噪声层。"""
+
+from __future__ import annotations
 
 import numpy as np
 import torch
@@ -20,6 +22,7 @@ def _transform(tensor: torch.Tensor, target_range: tuple[float, float]) -> torch
 @register_noise("quantization")
 @register_noise("quantize")
 class QuantizationNoise(BaseNoiseLayer):
+    """执行颜色量化近似。"""
     def __init__(self, fourier_terms: int = 10, device: torch.device | None = None):
         super().__init__()
         if device is None:
@@ -36,7 +39,7 @@ class QuantizationNoise(BaseNoiseLayer):
         self.register_buffer("scales", torch.tensor(scales, dtype=torch.float32, device=device))
 
     def _fourier_rounding(self, tensor: torch.Tensor) -> torch.Tensor:
-        # Add the Fourier-term dimension.
+        # 增加 Fourier 项维度。
         tensor_expanded = tensor.unsqueeze(0)
         scales = self.scales.view(-1, 1, 1, 1, 1)
         weights = self.weights.view(-1, 1, 1, 1, 1)

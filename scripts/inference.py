@@ -1,4 +1,5 @@
-"""Patch-based watermark embedding and extraction."""
+"""命令行图片水印嵌入和提取脚本。"""
+
 
 from __future__ import annotations
 
@@ -81,20 +82,20 @@ def _load_image(path: str) -> Image.Image:
 
 
 def _pad_to_multiple(img: Image.Image, multiple: int) -> Image.Image:
-    """Pad image edges to a multiple of the patch size."""
+    """将图像边缘补齐到 patch 尺寸的整数倍。"""
     w, h = img.size
     new_w = ((w + multiple - 1) // multiple) * multiple
     new_h = ((h + multiple - 1) // multiple) * multiple
     if new_w != w or new_h != h:
         padded = Image.new("RGB", (new_w, new_h))
         padded.paste(img, (0, 0))
-        # Extend edge pixels into the padding.
+        # 用边缘像素填充右侧空白。
         if new_w > w:
             edge = img.crop((w - 1, 0, w, h))
             stretched = edge.resize((new_w - w, h), Image.LANCZOS)
             padded.paste(stretched, (w, 0))
         if new_h > h:
-            # Keep the bottom strip continuous.
+            # 用底部像素填充下方空白。
             edge = padded.crop((0, h - 1, new_w, h))
             stretched = edge.resize((new_w, new_h - h), Image.LANCZOS)
             padded.paste(stretched, (0, h))
@@ -103,7 +104,7 @@ def _pad_to_multiple(img: Image.Image, multiple: int) -> Image.Image:
 
 
 def _image_to_patches(img: Image.Image, patch_size: int) -> tuple[list[Image.Image], int, int, int, int]:
-    """Split an image into patches."""
+    """将图像切分为 patch。"""
     img = _pad_to_multiple(img, patch_size)
     orig_w, orig_h = img.size
     cols = orig_w // patch_size

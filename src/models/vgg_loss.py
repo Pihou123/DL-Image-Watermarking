@@ -1,4 +1,6 @@
-﻿from __future__ import annotations
+"""VGG 感知损失特征提取模块。"""
+
+from __future__ import annotations
 
 import torch
 import torch.nn as nn
@@ -6,7 +8,7 @@ from torchvision.models import VGG16_Weights, vgg16
 
 
 class VGGLoss(nn.Module):
-    """VGG feature extractor for perceptual loss."""
+    """用于感知损失的 VGG 特征提取器。"""
 
     def __init__(self, feature_layers: int = 16, device: torch.device | None = None):
         super().__init__()
@@ -23,6 +25,6 @@ class VGGLoss(nn.Module):
             self.features.to(device)
 
     def forward(self, image: torch.Tensor) -> torch.Tensor:
-        # VGG expects [0, 1].
+        # VGG 输入范围为 [0, 1]。
         x = (image + 1.0) / 2.0
         return self.features(x)

@@ -1,4 +1,6 @@
-﻿from __future__ import annotations
+"""随机种子设置工具。"""
+
+from __future__ import annotations
 
 import random
 

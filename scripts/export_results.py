@@ -1,4 +1,6 @@
-﻿from __future__ import annotations
+"""训练结果导出脚本。"""
+
+from __future__ import annotations
 
 from pathlib import Path
 import sys

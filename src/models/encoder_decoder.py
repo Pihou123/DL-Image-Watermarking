@@ -1,4 +1,6 @@
-﻿from __future__ import annotations
+"""编码器、噪声层和解码器的串联模块。"""
+
+from __future__ import annotations
 
 import torch
 import torch.nn as nn
@@ -8,6 +10,7 @@ from .encoder import Encoder
 
 
 class EncoderDecoder(nn.Module):
+    """将图像和水印 bit 融合生成编码结果。"""
     def __init__(self, model_cfg: dict, image_size: tuple[int, int], noise_manager):
         super().__init__()
         self.encoder = Encoder(model_cfg, image_size=image_size)

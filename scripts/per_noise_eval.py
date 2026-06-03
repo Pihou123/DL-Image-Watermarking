@@ -1,4 +1,4 @@
-"""Evaluate a checkpoint against each configured noise layer."""
+"""逐噪声鲁棒性评估脚本。"""
 
 from __future__ import annotations
 
@@ -53,12 +53,12 @@ def evaluate_noise(
     noise_module,
     device: torch.device,
 ) -> dict[str, float]:
-    """Evaluate one forced noise layer."""
+    """评估指定的单个噪声层。"""
     original_manager = model.encoder_decoder.noise_manager
     original_layers = model.encoder_decoder.noise_manager.layers
     original_specs = model.encoder_decoder.noise_manager.layer_specs
 
-    # Force one noise layer.
+    # 强制只使用一个噪声层。
     target_key = f"{noise_name}_eval"
     model.encoder_decoder.noise_manager.layers = torch.nn.ModuleDict({target_key: noise_module})
     model.encoder_decoder.noise_manager.layer_specs = [
@@ -88,7 +88,7 @@ def evaluate_noise(
         psnrs.append(compute_psnr(encoded, images))
         ssims.append(compute_ssim(encoded, images))
 
-    # Restore the configured manager.
+    # 恢复原始噪声管理器配置。
     model.encoder_decoder.noise_manager.layers = original_layers
     model.encoder_decoder.noise_manager.layer_specs = original_specs
     model.encoder_decoder.noise_manager.strategy = original_manager.strategy
@@ -146,7 +146,7 @@ def main() -> None:
     print(f"Val samples: {len(val_loader.dataset)}")
     print()
 
-    # Preserve config order.
+    # 保持配置文件中的噪声顺序。
     layer_configs = cfg["noise"].get("layers", [])
     noise_entries: list[tuple[str, dict]] = []
     for entry in layer_configs:
@@ -159,7 +159,7 @@ def main() -> None:
         try:
             noise_module = create_noise(noise_name, device=device, **params)
         except TypeError:
-            # Some layers do not use device.
+            # 部分噪声层不接收 device 参数。
             noise_module = create_noise(noise_name, **params)
 
         results[noise_name] = evaluate_noise(model, val_loader, noise_name, noise_module, device)

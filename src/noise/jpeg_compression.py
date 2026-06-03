@@ -1,4 +1,6 @@
-﻿from __future__ import annotations
+"""基于 DCT/YUV 的 JPEG 近似压缩噪声层。"""
+
+from __future__ import annotations
 
 import numpy as np
 import torch
@@ -58,6 +60,7 @@ def _yuv_to_rgb(image_yuv: torch.Tensor) -> torch.Tensor:
 
 @register_noise("jpeg")
 class JpegCompressionNoise(BaseNoiseLayer):
+    """执行 JPEG 近似压缩。"""
     def __init__(self, device: torch.device | None = None, yuv_keep_weights: tuple[int, int, int] = (25, 9, 9)):
         super().__init__()
         if device is None:

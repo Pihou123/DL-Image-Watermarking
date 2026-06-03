@@ -1,3 +1,5 @@
+"""保留局部含水印区域的噪声层。"""
+
 from __future__ import annotations
 
 import torch
@@ -8,7 +10,7 @@ from .registry import register_noise
 
 @register_noise("cropout")
 class CropoutLayer(BaseNoiseLayer):
-    """Keep one encoded region and fill the rest from the cover."""
+    """保留一块含水印区域，其余位置使用原图填充。"""
 
     def __init__(self, keep_ratio: float = 0.3, device: torch.device | None = None):
         super().__init__()

@@ -1,4 +1,6 @@
-﻿from __future__ import annotations
+"""模型和噪声层快速连通性测试脚本。"""
+
+from __future__ import annotations
 
 from pathlib import Path
 import sys

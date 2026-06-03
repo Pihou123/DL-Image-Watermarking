@@ -1,4 +1,6 @@
-﻿from __future__ import annotations
+"""水印解码器模块。"""
+
+from __future__ import annotations
 
 import torch.nn as nn
 
@@ -7,6 +9,7 @@ from .conv_bn_relu import ConvBNRelu, DiffConvBNRelu
 
 
 class Decoder(nn.Module):
+    """从含水印图像中预测水印 bit。"""
     def __init__(self, model_cfg: dict):
         super().__init__()
         channels = int(model_cfg["decoder_channels"])

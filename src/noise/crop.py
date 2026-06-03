@@ -1,3 +1,5 @@
+"""随机裁剪并还原尺寸的噪声层。"""
+
 from __future__ import annotations
 
 import torch
@@ -9,7 +11,7 @@ from .registry import register_noise
 
 @register_noise("crop")
 class CropLayer(BaseNoiseLayer):
-    """Crop a random region and resize it back."""
+    """随机裁剪区域并缩放回原尺寸。"""
 
     def __init__(self, keep_ratio: float = 0.7, device: torch.device | None = None):
         super().__init__()

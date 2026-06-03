@@ -1,4 +1,6 @@
-﻿from __future__ import annotations
+"""模型训练入口脚本。"""
+
+from __future__ import annotations
 
 from pathlib import Path
 import sys

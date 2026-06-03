@@ -1,3 +1,5 @@
+"""数据集读取、划分和 DataLoader 构建工具。"""
+
 from __future__ import annotations
 
 import random
@@ -14,7 +16,7 @@ IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".bmp", ".webp"}
 
 
 class CachedTensorDataset(Dataset):
-    """Dataset backed by resized .pt tensors."""
+    """读取预处理后的 .pt 张量数据集。"""
 
     def __init__(self, cache_dir: Path, crop_size: tuple[int, int], normalize: bool = True, is_train: bool = True):
         self.cache_dir = Path(cache_dir)
@@ -30,7 +32,7 @@ class CachedTensorDataset(Dataset):
 
     def __getitem__(self, index: int):
         tensor = torch.load(self.files[index], weights_only=True)
-        # Cached tensors use [C, H, W] and [0, 1].
+        # 缓存张量格式为 [C, H, W]，数值范围为 [0, 1]。
         _, h, w = tensor.shape
         crop_h, crop_w = self.crop_size
 
@@ -51,6 +53,7 @@ class CachedTensorDataset(Dataset):
 
 
 class FlatImageDataset(Dataset):
+    """读取单层图片目录的数据集。"""
     def __init__(self, image_paths: Sequence[Path], transform=None):
         self.image_paths = list(image_paths)
         self.transform = transform
@@ -63,7 +66,7 @@ class FlatImageDataset(Dataset):
         image = Image.open(path).convert("RGB")
         if self.transform is not None:
             image = self.transform(image)
-        # Match ImageFolder output.
+        # 保持与 ImageFolder 相同的返回格式。
         return image, 0
 
 
@@ -138,7 +141,7 @@ def _build_transforms(dataset_cfg: dict) -> dict[str, transforms.Compose]:
     random_hflip_prob = float(preprocess_cfg.get("random_hflip_prob", 0.0))
 
     train_ops = [
-        # Preserve aspect ratio before cropping.
+        # 裁剪前保持图像宽高比。
         transforms.Resize(train_short_side, interpolation=interpolation, antialias=antialias),
         transforms.RandomCrop(crop_size),
     ]

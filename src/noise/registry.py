@@ -1,4 +1,6 @@
-﻿from __future__ import annotations
+"""噪声层注册表。"""
+
+from __future__ import annotations
 
 from typing import Callable
 

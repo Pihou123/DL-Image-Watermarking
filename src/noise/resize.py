@@ -1,3 +1,5 @@
+"""随机缩放并还原尺寸的噪声层。"""
+
 from __future__ import annotations
 
 import torch
@@ -9,7 +11,7 @@ from .registry import register_noise
 
 @register_noise("resize")
 class ResizeLayer(BaseNoiseLayer):
-    """Scale the image and resize it back."""
+    """缩放图像后还原到原尺寸。"""
 
     def __init__(self, ratio_min: float = 0.5, ratio_max: float = 1.0, device: torch.device | None = None):
         super().__init__()

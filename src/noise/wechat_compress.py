@@ -1,3 +1,5 @@
+"""微信压缩近似噪声层。"""
+
 from __future__ import annotations
 
 import torch
@@ -10,7 +12,7 @@ from .registry import register_noise
 
 @register_noise("wechat")
 class WechatCompressionLayer(BaseNoiseLayer):
-    """Approximate WeChat image compression."""
+    """近似模拟微信图片压缩。"""
 
     def __init__(
         self,
@@ -18,7 +20,7 @@ class WechatCompressionLayer(BaseNoiseLayer):
         max_long_side: int = 1280,
         yuv_keep_weights: tuple[int, int, int] = (20, 8, 8),
     ):
-        """Set compression parameters."""
+        """设置压缩参数。"""
         super().__init__()
         if device is None:
             device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -26,11 +28,11 @@ class WechatCompressionLayer(BaseNoiseLayer):
         self.max_long_side = int(max_long_side)
         self.yuv_keep_weights = tuple(yuv_keep_weights)
 
-        # Build the JPEG layer on first use.
+        # 首次使用时构建 JPEG 层。
         self._jpeg_layer: nn.Module | None = None
 
     def _ensure_jpeg_layer(self, h: int, w: int) -> None:
-        """Create the JPEG layer when needed."""
+        """按需创建 JPEG 层。"""
         if self._jpeg_layer is not None:
             return
         from .jpeg_compression import JpegCompressionNoise
@@ -44,17 +46,17 @@ class WechatCompressionLayer(BaseNoiseLayer):
         _, _, h, w = encoded.shape
         long_side = max(h, w)
 
-        # Resize large images.
+        # 缩放超出长边限制的图像。
         if long_side > self.max_long_side:
             ratio = self.max_long_side / long_side
             new_h, new_w = int(round(h * ratio)), int(round(w * ratio))
             resized = F.interpolate(encoded, size=(new_h, new_w), mode="bilinear", align_corners=False)
-            # Restore the original size.
+            # 还原到原始尺寸。
             resized = F.interpolate(resized, size=(h, w), mode="bilinear", align_corners=False)
         else:
             resized = encoded
 
-        # Apply approximate JPEG compression.
+        # 应用近似 JPEG 压缩。
         self._ensure_jpeg_layer(h, w)
         assert self._jpeg_layer is not None
         compressed = self._jpeg_layer(resized, cover)

@@ -1,4 +1,6 @@
-﻿from __future__ import annotations
+"""训练指标 CSV 和曲线图保存工具。"""
+
+from __future__ import annotations
 
 import csv
 import math

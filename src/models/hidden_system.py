@@ -1,3 +1,5 @@
+"""隐形水印系统的训练、验证和推理封装。"""
+
 from __future__ import annotations
 
 import numpy as np
@@ -12,6 +14,7 @@ from ..engine.metrics import compute_psnr, compute_ssim
 
 
 class HiddenSystem(nn.Module):
+    """组合编码器、解码器、判别器和损失函数。"""
     def __init__(self, model_cfg: dict, train_cfg: dict, image_size: tuple[int, int], noise_manager, device: torch.device):
         super().__init__()
         self.device = device
@@ -83,16 +86,16 @@ class HiddenSystem(nn.Module):
             param.requires_grad_(requires_grad)
 
     def _expand_message(self, messages: torch.Tensor) -> torch.Tensor:
-        """Expand payload bits with repetition."""
+        """按重复因子扩展 payload bit。"""
         if self.repeat_factor == 1:
             return messages
         return messages.repeat_interleave(self.repeat_factor, dim=1)
 
     def _compress_message(self, decoded: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
-        """Average repeated payload bits."""
+        """对重复 bit 求平均，还原有效 payload。"""
         if self.repeat_factor == 1:
             return decoded, decoded
-        # Average repeated bits.
+        # 对每组重复 bit 求平均。
         b = decoded.shape[0]
         reshaped = decoded.view(b, self.payload_length, self.repeat_factor)
         compressed = reshaped.mean(dim=2)
@@ -141,7 +144,7 @@ class HiddenSystem(nn.Module):
 
     @staticmethod
     def _rgb_to_yuv(image: torch.Tensor) -> torch.Tensor:
-        # Convert [-1, 1] to [0, 1].
+        # 将 [-1, 1] 转为 [0, 1]。
         x = (image + 1.0) / 2.0
         r = x[:, 0:1]
         g = x[:, 1:2]

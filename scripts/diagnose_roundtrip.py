@@ -1,3 +1,5 @@
+"""诊断张量推理和 PNG 往返后的提取差异。"""
+
 from __future__ import annotations
 
 import argparse

@@ -1,3 +1,5 @@
+"""注意力、空间变换和多尺度卷积模块。"""
+
 from __future__ import annotations
 
 import math
@@ -8,7 +10,7 @@ import torch.nn.functional as F
 
 
 class SpatialTransformer(nn.Module):
-    """Affine STN with identity initialization."""
+    """带恒等初始化的仿射空间变换网络。"""
 
     def __init__(self, in_channels: int = 3, hidden_channels: int = 32, transform_scale: float = 0.1):
         super().__init__()
@@ -46,7 +48,7 @@ class SpatialTransformer(nn.Module):
 
 
 class MultiScaleDilatedBlock(nn.Module):
-    """Multi-scale dilated residual block."""
+    """多尺度空洞卷积残差块。"""
 
     def __init__(self, channels: int, dilations: list[int] | tuple[int, ...] = (1, 2, 5)):
         super().__init__()
@@ -75,7 +77,7 @@ class MultiScaleDilatedBlock(nn.Module):
 
 
 class GaborAttention(nn.Module):
-    """Gabor channel attention."""
+    """基于 Gabor 响应的通道注意力。"""
 
     def __init__(
         self,

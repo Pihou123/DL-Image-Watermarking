@@ -1,4 +1,6 @@
-﻿from __future__ import annotations
+"""PSNR、SSIM 和指标平均值计算工具。"""
+
+from __future__ import annotations
 
 from dataclasses import dataclass, field
 import math
@@ -8,7 +10,7 @@ import torch.nn.functional as F
 
 
 def _gaussian_kernel(size: int, sigma: float) -> torch.Tensor:
-    """Generate a 1D Gaussian kernel."""
+    """生成一维高斯核。"""
     coords = torch.arange(size, dtype=torch.float32)
     mean = (size - 1) / 2.0
     kernel = torch.exp(-((coords - mean) ** 2) / (2.0 * sigma**2))
@@ -17,7 +19,7 @@ def _gaussian_kernel(size: int, sigma: float) -> torch.Tensor:
 
 
 def _gaussian_filter(channels: int, kernel_size: int, sigma: float, device: torch.device) -> torch.Tensor:
-    """Build a depthwise 2D Gaussian kernel."""
+    """生成按通道卷积的二维高斯核。"""
     k1d = _gaussian_kernel(kernel_size, sigma).to(device)
     k2d = k1d[:, None] * k1d[None, :]
     kernel = k2d.expand(channels, 1, kernel_size, kernel_size).contiguous()
@@ -25,7 +27,7 @@ def _gaussian_filter(channels: int, kernel_size: int, sigma: float, device: torc
 
 
 def compute_psnr(encoded: torch.Tensor, cover: torch.Tensor) -> float:
-    """Compute PSNR in dB for tensors in [-1, 1]."""
+    """计算 [-1, 1] 张量的 PSNR。"""
     encoded_01 = (encoded.detach().float().clamp(-1, 1) + 1.0) / 2.0
     cover_01 = (cover.detach().float().clamp(-1, 1) + 1.0) / 2.0
     mse = float(F.mse_loss(encoded_01, cover_01).item())
@@ -42,7 +44,7 @@ def compute_ssim(
     k1: float = 0.01,
     k2: float = 0.03,
 ) -> float:
-    """Compute mean SSIM for tensors in [-1, 1]."""
+    """计算 [-1, 1] 张量的平均 SSIM。"""
     encoded_01 = (encoded.detach().float().clamp(-1, 1) + 1.0) / 2.0
     cover_01 = (cover.detach().float().clamp(-1, 1) + 1.0) / 2.0
     device = encoded.device
@@ -73,6 +75,7 @@ def compute_ssim(
 
 @dataclass
 class MetricsAverager:
+    """累积并平均每个指标。"""
     sums: dict[str, float] = field(default_factory=dict)
     counts: dict[str, int] = field(default_factory=dict)
 

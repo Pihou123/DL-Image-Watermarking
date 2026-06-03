@@ -1,3 +1,5 @@
+"""高斯噪声层。"""
+
 from __future__ import annotations
 
 import torch
@@ -8,7 +10,7 @@ from .registry import register_noise
 
 @register_noise("gaussian_noise")
 class GaussianNoiseLayer(BaseNoiseLayer):
-    """Add zero-mean Gaussian noise."""
+    """添加零均值高斯噪声。"""
 
     def __init__(self, std: float = 0.05, device: torch.device | None = None):
         super().__init__()

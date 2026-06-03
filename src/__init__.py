@@ -1,1 +1,1 @@
-﻿"""Refactored HiDDeN project package."""
+"""项目源码根包。"""

@@ -1,3 +1,5 @@
+"""卷积、归一化和激活基础模块。"""
+
 from __future__ import annotations
 
 import torch
@@ -6,6 +8,7 @@ import torch.nn.functional as F
 
 
 class ConvBNRelu(nn.Module):
+    """标准 Conv-BN-ReLU 模块。"""
     def __init__(self, in_channels: int, out_channels: int):
         super().__init__()
         self.layers = nn.Sequential(
@@ -19,7 +22,7 @@ class ConvBNRelu(nn.Module):
 
 
 class DiffConvBNRelu(nn.Module):
-    """Differential convolution block."""
+    """差分卷积增强模块。"""
 
     def __init__(self, in_channels: int, out_channels: int, diff_scale: float = 1.0):
         super().__init__()

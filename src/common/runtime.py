@@ -1,3 +1,5 @@
+"""运行设备选择和输出目录创建工具。"""
+
 from __future__ import annotations
 
 from datetime import datetime

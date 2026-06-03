@@ -1,4 +1,6 @@
-﻿from __future__ import annotations
+"""图像对比网格和残差热力图保存工具。"""
+
+from __future__ import annotations
 
 from pathlib import Path
 

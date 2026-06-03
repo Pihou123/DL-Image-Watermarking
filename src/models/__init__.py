@@ -1,1 +1,1 @@
-﻿"""Model components for encoder, decoder, discriminator, and trainer wrapper."""
+"""模型组件包：编码器、解码器、判别器和系统封装。"""

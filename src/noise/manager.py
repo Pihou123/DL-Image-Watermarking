@@ -1,4 +1,6 @@
-﻿from __future__ import annotations
+"""噪声层构建、选择和调度管理器。"""
+
+from __future__ import annotations
 
 import random
 from typing import Any
@@ -6,14 +8,14 @@ from typing import Any
 import torch
 import torch.nn as nn
 
-# Load built-in layers.
+# 加载内置噪声层。
 from . import adversarial, crop, cropout, dropout, gaussian_blur, gaussian_noise  # noqa: F401
 from . import identity, jpeg_compression, quantization, resize, wechat_compress  # noqa: F401
 from .registry import create_noise
 
 
 class NoiseManager(nn.Module):
-    """Select and apply configured noise layers."""
+    """选择并应用配置中的噪声层。"""
 
     def __init__(self, noise_cfg: dict[str, Any], device: torch.device):
         super().__init__()
@@ -55,7 +57,7 @@ class NoiseManager(nn.Module):
             )
 
     def _build_noise_module(self, name: str, params: dict[str, Any]) -> nn.Module:
-        # Support layers without a device argument.
+        # 兼容不接收 device 参数的噪声层。
         with_device = dict(params)
         with_device.setdefault("device", self.device)
 

@@ -1,4 +1,6 @@
-﻿from __future__ import annotations
+"""配置文件读取、保存和命令行覆盖工具。"""
+
+from __future__ import annotations
 
 from copy import deepcopy
 from pathlib import Path

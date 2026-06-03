@@ -1,4 +1,6 @@
-﻿from __future__ import annotations
+"""判别器模块，用于区分原图和含水印图。"""
+
+from __future__ import annotations
 
 import torch.nn as nn
 
@@ -6,6 +8,7 @@ from .conv_bn_relu import ConvBNRelu
 
 
 class Discriminator(nn.Module):
+    """轻量卷积判别器。"""
     def __init__(self, model_cfg: dict):
         super().__init__()
         channels = int(model_cfg["discriminator_channels"])

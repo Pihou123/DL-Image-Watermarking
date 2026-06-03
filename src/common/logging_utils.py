@@ -1,4 +1,6 @@
-﻿from __future__ import annotations
+"""训练和评估日志初始化工具。"""
+
+from __future__ import annotations
 
 import logging
 from pathlib import Path

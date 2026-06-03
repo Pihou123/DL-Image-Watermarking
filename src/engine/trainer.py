@@ -1,3 +1,5 @@
+"""训练循环、验证调度和结果保存逻辑。"""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -13,6 +15,7 @@ from ..visualize.curves import plot_history, write_history_csv
 
 
 class Trainer:
+    """管理完整训练循环和结果保存。"""
     def __init__(self, model, config: dict, device: torch.device, run_dir: str | Path, logger):
         self.model = model
         self.config = config

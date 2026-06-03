@@ -1,4 +1,4 @@
-"""隐形数字水印系统演示界面。"""
+"""隐形数字水印系统 Gradio 演示界面。"""
 
 from __future__ import annotations
 
@@ -298,7 +298,7 @@ def _model_patch_size(model: HiddenSystem) -> int:
 
 
 def _tensor_to_pil_image(tensor: torch.Tensor) -> Image.Image:
-    # Convert [-1, 1] tensor to an 8-bit image.
+    # 将 [-1, 1] 张量转为 8 bit 图像。
     image = tensor.detach().cpu().clamp(-1, 1)
     image = (image + 1.0) / 2.0
     image = image.clamp(0, 1)

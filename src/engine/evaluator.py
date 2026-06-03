@@ -1,4 +1,6 @@
-﻿from __future__ import annotations
+"""模型验证和可视化样例保存工具。"""
+
+from __future__ import annotations
 
 from pathlib import Path
 
@@ -10,6 +12,7 @@ from ..visualize.image_grid import save_difference_heatmap, save_triplet_grid
 
 
 class Evaluator:
+    """执行验证并保存可视化样例。"""
     def __init__(self, model, device: torch.device, message_length: int):
         self.model = model
         self.device = device

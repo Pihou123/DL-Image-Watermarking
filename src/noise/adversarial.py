@@ -1,3 +1,5 @@
+"""可训练对抗扰动噪声层。"""
+
 from __future__ import annotations
 
 import torch
@@ -9,7 +11,7 @@ from .registry import register_noise
 
 @register_noise("adversarial")
 class AdversarialNoiseLayer(BaseNoiseLayer):
-    """Trainable bounded perturbation layer."""
+    """可训练的有界扰动层。"""
 
     is_adversarial = True
 

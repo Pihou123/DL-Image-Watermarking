@@ -1,3 +1,5 @@
+"""模型评估入口脚本。"""
+
 from __future__ import annotations
 
 from pathlib import Path

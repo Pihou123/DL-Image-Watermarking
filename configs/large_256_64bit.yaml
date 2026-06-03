@@ -1,9 +1,12 @@
+# 大尺寸大载荷训练配置文件。
+# 实验名称、随机种子、设备和输出目录。
 experiment:
   name: hidden_large256_64bit
   seed: 42
   device: auto
   output_root: outputs/runs
 
+# 数据集路径、图像尺寸和预处理参数。
 dataset:
   train_dir: data/train
   val_dir: data/val
@@ -13,6 +16,7 @@ dataset:
   image_size: [256, 256]
   num_workers: 8
   pin_memory: true
+  # 图像缩放、裁剪和数据增强设置。
   preprocess:
     train_resize_short_side: 288
     val_resize_short_side: 288
@@ -20,6 +24,7 @@ dataset:
     antialias: true
     random_hflip_prob: 0.0
 
+# 训练轮数、batch size、学习率和保存频率。
 train:
   batch_size: 8
   epochs: 100
@@ -33,6 +38,7 @@ train:
   save_every: 5
   validate_every: 1
 
+# 模型结构、payload 长度和损失权重。
 model:
   message_length: 128
   payload_length: 64
@@ -70,14 +76,17 @@ model:
   use_yuv_loss: false
   yuv_loss_weight: 0.2
   yuv_channel_weights: [1.0, 10.0, 10.0]
+  # 各项训练损失的权重。
   loss_weights:
     encoder: 1.0
     decoder: 2.0
     adversarial: 1.0
     payload: 3.0
 
+# 训练时使用的噪声层和调度策略。
 noise:
   strategy: weighted_random
+  # 可选的可训练对抗噪声。
   adversarial:
     enabled: false
     probability: 0.2
@@ -85,6 +94,7 @@ noise:
       epsilon: 0.02
       channels: 32
       blocks: 3
+  # 候选噪声层列表。
   layers:
     - name: identity
       probability: 0.10
@@ -127,8 +137,10 @@ noise:
       params:
         ratio_min: 0.5
         ratio_max: 1.0
+  # 分阶段噪声训练计划。
   curriculum:
     enabled: true
+    # 每个阶段的 epoch 范围和噪声概率。
     schedule:
       - start_epoch: 1
         end_epoch: 25
@@ -159,9 +171,11 @@ noise:
           cropout: 0.15
           resize: 0.9
 
+# 训练过程中的样例图保存设置。
 visualization:
   sample_count: 4
   save_every: 5
 
+# 日志级别设置。
 logging:
   level: INFO

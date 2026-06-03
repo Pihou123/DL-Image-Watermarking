@@ -1,1 +1,1 @@
-﻿"""Common utilities for configuration, logging, and runtime setup."""
+"""通用工具包：配置、日志和运行环境。"""

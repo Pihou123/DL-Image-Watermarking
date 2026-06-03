@@ -1,3 +1,5 @@
+"""高斯模糊噪声层。"""
+
 from __future__ import annotations
 
 import math
@@ -10,7 +12,7 @@ from .registry import register_noise
 
 
 def _make_gaussian_kernel_2d(sigma: float, device: torch.device) -> torch.Tensor:
-    """Build a 2D Gaussian kernel."""
+    """构建二维高斯核。"""
     radius = int(math.ceil(3.0 * sigma))
     size = 2 * radius + 1
     coords = torch.arange(size, dtype=torch.float32, device=device) - radius
@@ -22,7 +24,7 @@ def _make_gaussian_kernel_2d(sigma: float, device: torch.device) -> torch.Tensor
 
 @register_noise("gaussian_blur")
 class GaussianBlurLayer(BaseNoiseLayer):
-    """Apply Gaussian blur."""
+    """执行高斯模糊。"""
 
     def __init__(self, sigma: float = 1.0, device: torch.device | None = None):
         super().__init__()

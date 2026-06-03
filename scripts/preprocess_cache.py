@@ -1,4 +1,4 @@
-"""Cache resized dataset tensors."""
+"""数据集预处理缓存脚本。"""
 
 from __future__ import annotations
 
@@ -59,7 +59,7 @@ def _resize_transform(dataset_cfg: dict, is_train: bool) -> transforms.Compose:
 
 
 def _process_one(args_tuple: tuple[str, str, dict]) -> tuple[str, str]:
-    """Resize and cache one image."""
+    """缩放并缓存单张图片。"""
     img_path_str, out_dir_str, dataset_cfg = args_tuple
     img_path = Path(img_path_str)
     out_dir = Path(out_dir_str)
@@ -84,7 +84,7 @@ def main() -> None:
     cfg = load_config(args.config)
     dataset_cfg = cfg["dataset"]
 
-    # Match the loader split.
+    # 与 DataLoader 的划分方式保持一致。
     train_dir = Path(dataset_cfg.get("train_dir", "")) if dataset_cfg.get("train_dir") else None
     val_dir = Path(dataset_cfg.get("val_dir", "")) if dataset_cfg.get("val_dir") else None
 
